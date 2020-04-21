@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
+import asyncio
 import os
 from functools import partial
 from threading import Thread
 
 import discord
 from discord.ext import commands
-from flask import Flask
 import giphy_client
 from google.cloud import secretmanager
 import numpy as np
+from sanic import Sanic
 
 # Get API Keys from GCP Secrets
 PROJECT_ID = os.environ['PROJECT_ID']
@@ -17,29 +18,29 @@ secrets = secretmanager.SecretManagerServiceClient()
 DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1").payload.data.decode("utf-8")
 GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1").payload.data.decode("utf-8")
 
-# Init Flask andBot
-app = Flask(__name__)
+# Init Server and Bot
+app = Sanic()
 bot = commands.Bot(command_prefix='!')
 giphy = giphy_client.DefaultApi()
 
-# Set routes and Start Server Thread
+# Set server routes
 @app.route("/")
-def hello():
+async def hello():
     #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
     return "{}".format(bot.user.name)
 
 # Make a partial app.run to pass args/kwargs to it
-partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
-t = Thread(target=partial_run)
-t.start()
+#partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
+#t = Thread(target=partial_run)
+#t.start()
 
-# === Events ===
+# === Bot Events ===
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
     
-# === Commands ===
+# === Bot Commands ===
 @bot.command(
     brief='Shows a random gif',
     usage='<Search Query>\n!random fat mac',
@@ -92,5 +93,13 @@ async def odds_error(ctx, error):
         await ctx.send(f'Error: {cmd} command is missing an argument - See \'!help {cmd}\' for details.')
 
         
-# Start Bot
-bot.run(DISCORD_BOT_TOKEN)
+# Start event loop
+bot_app = bot.start(DISCORD_BOT_TOKEN)
+bot_task = asyncio.ensure_future(bot_app)
+
+webserver_app = app.create_server(host='0.0.0.0', port=8080)
+webserver_task = asyncio.ensure_future(webserver_app)
+
+loop = asyncio.get_event_loop()
+loop.run_forever()
+

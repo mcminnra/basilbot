@@ -4,7 +4,7 @@ automatic_scaling:
   min_instances: 1
   max_instances: 1
 
-entrypoint: gunicorn -b :$PORT -w 1 main:app
+entrypoint: gunicorn -b :$PORT main:app --worker-class sanic.worker.GunicornWorker
 
 env_variables:
   PROJECT_ID: "885964706899"
