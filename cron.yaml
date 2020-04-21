@@ -1,4 +1,4 @@
 cron:
 - description: "keep alive"
-  url: https://www.foaas.com/version
+  url: /
   schedule: every 5 mins
