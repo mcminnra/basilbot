@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+import os
+
 import discord
 from discord.ext import commands
 import giphy_client
@@ -5,9 +9,10 @@ from google.cloud import secretmanager
 import numpy as np
 
 # Get API Keys from GCP Secrets
+PROJECT_ID = os.environ['PROJECT_ID']
 secrets = secretmanager.SecretManagerServiceClient()
-DISCORD_BOT_TOKEN = secrets.access_secret_version("projects/basilbot/secrets/DISCORD_BOT_TOKEN/versions/latest").payload.data.decode("utf-8")
-GIPHY_KEY = secrets.access_secret_version("projects/basilbot/secrets/GIPHY_KEY/versions/latest").payload.data.decode("utf-8")
+DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/latest").payload.data.decode("utf-8")
+GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/latest").payload.data.decode("utf-8")
 
 # Init Bot
 bot = commands.Bot(command_prefix='!')

@@ -7,5 +7,5 @@ automatic_scaling:
 entrypoint: python bot.py
 
 env_variables:
-  PROJECT_ID: "basilbot"
+  PROJECT_ID: "885964706899"
   
