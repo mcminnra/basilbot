@@ -1,5 +1,5 @@
 cron:
-- description: "keep alive check"
+- description: "keep alive static check"
   url: /
   schedule: every 5 mins
   
