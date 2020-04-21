@@ -8,4 +8,7 @@ entrypoint: python bot.py
 
 env_variables:
   PROJECT_ID: "885964706899"
-  
+
+handlers:
+- url: /
+  static_dir: static_html
