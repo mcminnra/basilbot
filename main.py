@@ -29,7 +29,7 @@ def hello():
     return "{}".format(bot.user.name)
 
 # Make a partial app.run to pass args/kwargs to it
-partial_run = partial(app.run, host="0.0.0.0", port=80, use_reloader=False)
+partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
 t = Thread(target=partial_run)
 t.start()
 
