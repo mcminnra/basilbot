@@ -17,19 +17,19 @@ secrets = secretmanager.SecretManagerServiceClient()
 DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1").payload.data.decode("utf-8")
 GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1").payload.data.decode("utf-8")
 
-# Init Bot
+# Init Flask andBot
+app = Flask(__name__)
 bot = commands.Bot(command_prefix='!')
 giphy = giphy_client.DefaultApi()
 
-# Init Flask and Start Server Thread
-app = Flask(__name__)
+# Set routes and Start Server Thread
 @app.route("/")
 def hello():
     #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
     return "{}".format(bot.user.name)
 
 # Make a partial app.run to pass args/kwargs to it
-partial_run = partial(app.run, host="0.0.0.0", port=80, debug=True, use_reloader=False)
+partial_run = partial(app.run, host="0.0.0.0", port=80, use_reloader=False)
 t = Thread(target=partial_run)
 t.start()
 
@@ -91,6 +91,6 @@ async def odds_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f'Error: {cmd} command is missing an argument - See \'!help {cmd}\' for details.')
 
-
+        
 # Start Bot
 bot.run(DISCORD_BOT_TOKEN)
