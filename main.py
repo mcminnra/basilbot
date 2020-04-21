@@ -93,13 +93,14 @@ async def odds_error(ctx, error):
         await ctx.send(f'Error: {cmd} command is missing an argument - See \'!help {cmd}\' for details.')
 
         
-# Start event loop
-bot_app = bot.start(DISCORD_BOT_TOKEN)
-bot_task = asyncio.ensure_future(bot_app)
+if __name__ == '__main__':
+    # Start event loop
+    webserver_app = app.create_server(host='0.0.0.0', port=8080)
+    webserver_task = asyncio.ensure_future(webserver_app)
 
-webserver_app = app.create_server(host='0.0.0.0', port=8080)
-webserver_task = asyncio.ensure_future(webserver_app)
-
-loop = asyncio.get_event_loop()
-loop.run_forever()
+    bot_app = bot.start(DISCORD_BOT_TOKEN)
+    bot_task = asyncio.ensure_future(bot_app)
+    
+    loop = asyncio.get_event_loop()
+    loop.run_forever()
 
