@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import os
+from functools import partial
+from threading import Thread
 
 import discord
 from discord.ext import commands
+from flask import Flask
 import giphy_client
 from google.cloud import secretmanager
 import numpy as np
@@ -17,6 +20,18 @@ GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_
 # Init Bot
 bot = commands.Bot(command_prefix='!')
 giphy = giphy_client.DefaultApi()
+
+# Init Flask and Start Server Thread
+app = Flask(__name__)
+@app.route("/")
+def hello():
+    #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
+    return "{}".format(bot.user.name)
+
+# Make a partial app.run to pass args/kwargs to it
+partial_run = partial(app.run, host="0.0.0.0", port=80, debug=True, use_reloader=False)
+t = Thread(target=partial_run)
+t.start()
 
 # === Events ===
 @bot.event
