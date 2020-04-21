@@ -25,7 +25,7 @@ giphy = giphy_client.DefaultApi()
 
 # Set server routes
 @app.route("/")
-async def hello():
+async def hello(request):
     #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
     return "{}".format(bot.user.name)
 
