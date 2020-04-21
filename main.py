@@ -27,7 +27,7 @@ giphy = giphy_client.DefaultApi()
 @app.route("/")
 async def hello(request):
     #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
-    return "{}".format(bot.user.name)
+    return "Basil"
 
 # Make a partial app.run to pass args/kwargs to it
 #partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
