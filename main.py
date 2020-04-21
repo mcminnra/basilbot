@@ -19,6 +19,7 @@ DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secret
 GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1").payload.data.decode("utf-8")
 
 # Init Server and Bot
+loop = asyncio.get_event_loop()
 app = Sanic()
 bot = commands.Bot(command_prefix='!')
 giphy = giphy_client.DefaultApi()
@@ -101,6 +102,6 @@ if __name__ == '__main__':
     bot_app = bot.start(DISCORD_BOT_TOKEN)
     bot_task = asyncio.ensure_future(bot_app)
     
-    loop = asyncio.get_event_loop()
     loop.run_forever()
+    loop.close()
 
