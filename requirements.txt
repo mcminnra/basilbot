@@ -1,6 +1,4 @@
 discord.py[voice]
 giphy_client
 google-cloud-secret-manager
-gunicorn
 numpy
-sanic

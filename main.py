@@ -1,45 +1,31 @@
 #!/usr/bin/env python3
 
-import asyncio
-import os
-from functools import partial
-from threading import Thread
-
 import discord
 from discord.ext import commands
 import giphy_client
 from google.cloud import secretmanager
 import numpy as np
-from sanic import Sanic
 
 # Get API Keys from GCP Secrets
-PROJECT_ID = os.environ['PROJECT_ID']
+PROJECT_ID = '885964706899'
 secrets = secretmanager.SecretManagerServiceClient()
-DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1").payload.data.decode("utf-8")
-GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1").payload.data.decode("utf-8")
+DISCORD_BOT_TOKEN = secrets.access_secret_version(
+    f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1"
+).payload.data.decode("utf-8")
+GIPHY_KEY = secrets.access_secret_version(
+    f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1"
+).payload.data.decode("utf-8")
 
-# Init Server and Bot
-app = Sanic()
+# Init Bot
 bot = commands.Bot(command_prefix='!')
 giphy = giphy_client.DefaultApi()
-
-# Set server routes
-@app.route("/")
-async def hello(request):
-    #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
-    return "Basil"
-
-# Make a partial app.run to pass args/kwargs to it
-#partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
-#t = Thread(target=partial_run)
-#t.start()
 
 # === Bot Events ===
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
-    
+
 # === Bot Commands ===
 @bot.command(
     brief='Shows a random gif',
@@ -52,7 +38,7 @@ async def random(ctx, *args):
     image_url = response.data[0].url
     await ctx.send(f'{image_url}')
 
-    
+
 @random.error
 async def random_error(ctx, error):
     cmd = '!random'
@@ -69,7 +55,7 @@ async def odds(ctx, odds, guess):
 
     odds, guess = int(odds), int(guess)
     msg = f'Odds: 1 to {odds}, Your Guess: {guess}\n'
-    
+
     if odds > 100 or odds < 1:
         msg += 'Error: Your odds have to be betwen 1 and 100!'
     elif guess > odds or guess < 1:
@@ -82,7 +68,7 @@ async def odds(ctx, odds, guess):
             msg += 'They match! Now you gotta do it.'
         else:
             msg += 'They don\'t match! You don\'t have to do it.'
-    
+
     await ctx.send(msg)
 
 
@@ -92,15 +78,6 @@ async def odds_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f'Error: {cmd} command is missing an argument - See \'!help {cmd}\' for details.')
 
-        
+
 if __name__ == '__main__':
-    # Start event loop
-    webserver_app = app.create_server(host='0.0.0.0', port=8080)
-    webserver_task = asyncio.ensure_future(webserver_app)
-
-    bot_app = bot.start(DISCORD_BOT_TOKEN)
-    bot_task = asyncio.ensure_future(bot_app)
-    
-    loop = asyncio.get_event_loop()
-    loop.run_forever()
-
+    bot_app = bot.run(DISCORD_BOT_TOKEN)
