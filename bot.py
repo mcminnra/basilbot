@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+import re
+
 import discord
 from discord.ext import commands
 import giphy_client
 from google.cloud import secretmanager
 import numpy as np
+import yfinance as yf
 
 # Get API Keys from GCP Secrets
 PROJECT_ID = '885964706899'
@@ -17,13 +20,35 @@ GIPHY_KEY = secrets.access_secret_version(
 ).payload.data.decode("utf-8")
 
 # Init Bot
-bot = commands.Bot(command_prefix='!')
+command_prefix='!'
+bot = commands.Bot(command_prefix=command_prefix)
 giphy = giphy_client.DefaultApi()
 
 # === Bot Events ===
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
+
+
+@bot.event
+async def on_message(message):
+    # Ignore Basil's own messages
+    if message.author == bot.user:
+        return
+
+    # If message starts with a commnd, run commnads
+    if message.content.startswith(command_prefix):
+        await bot.process_commands(message)
+        return
+
+    # Stock Ticker
+    stock_tickers = re.findall(r'[$]\b[A-Z]{3,5}\b', message.content)
+    if stock_tickers:
+        stocks = [ticker.replace('$', '') for ticker in stock_tickers]
+        for stock in stocks:
+            history = yf.Ticker(stock).history('1mo')
+            await message.channel.send(f'Ticker: {stock}')
+            await message.channel.send(f'{history}')
 
 
 # === Bot Commands ===
