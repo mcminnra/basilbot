@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 import re
@@ -6,7 +7,9 @@ import discord
 from discord.ext import commands
 import giphy_client
 from google.cloud import secretmanager
+import pandas as pd
 import numpy as np
+from tabulate import tabulate
 import yfinance as yf
 
 # Get API Keys from GCP Secrets
@@ -44,11 +47,31 @@ async def on_message(message):
     # Stock Ticker
     stock_tickers = re.findall(r'[$]\b[A-Z]{3,5}\b', message.content)
     if stock_tickers:
+        print('[Event] Stock Ticker Found')
         stocks = [ticker.replace('$', '') for ticker in stock_tickers]
         for stock in stocks:
-            history = yf.Ticker(stock).history('1mo')
-            await message.channel.send(f'Ticker: {stock}')
-            await message.channel.send(f'{history}')
+            ticker = yf.Ticker(stock)
+            history = ticker.history('6mo')
+
+            # Get Info
+            current_date = pd.to_datetime(history.index.values[-1]).date()
+            close = history.iloc[-1]['Close']
+            change_7 = '$' + str(np.round(close - history.iloc[-7]['Close'], 2))
+            change_30 = '$' + str(np.round(close - history.iloc[-30]['Close'], 2))
+            change_90 = '$' + str(np.round(close - history.iloc[-90]['Close'], 2))
+
+            # Format Output
+            header = ['Delta Period', 'Change']
+            data = [
+                ['07 Days', change_7],
+                ['30 Days', change_30],
+                ['90 Days', change_90]
+            ]
+            await message.channel.send(
+                f'```Ticker: {stock}\n\n' +
+                f'{current_date} - Close: ${close:0.2f}\n\n' +
+                f'{tabulate(data, headers=header, tablefmt="fancy_grid", numalign="right")}```'
+            )
 
 
 # === Bot Commands ===

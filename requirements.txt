@@ -1,5 +1,7 @@
 discord.py[voice]
 giphy_client
 google-cloud-secret-manager
+pandas
 numpy
+tabulate
 yfinance
