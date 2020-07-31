@@ -1,20 +1,21 @@
+
 #!/usr/bin/env python3
 
-import asyncio
-import os
-from functools import partial
-from threading import Thread
+import re
 
 import discord
 from discord.ext import commands
 import giphy_client
 from google.cloud import secretmanager
+import pandas as pd
 import numpy as np
-from sanic import Sanic
+from tabulate import tabulate
+import yfinance as yf
 
 # Get API Keys from GCP Secrets
-PROJECT_ID = os.environ['PROJECT_ID']
+PROJECT_ID = '885964706899'
 secrets = secretmanager.SecretManagerServiceClient()
+<<<<<<< HEAD:main.py
 DISCORD_BOT_TOKEN = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1").payload.data.decode("utf-8")
 GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1").payload.data.decode("utf-8")
 
@@ -22,25 +23,67 @@ GIPHY_KEY = secrets.access_secret_version(f"projects/{PROJECT_ID}/secrets/GIPHY_
 loop = asyncio.get_event_loop()
 app = Sanic()
 bot = commands.Bot(command_prefix='!')
+=======
+DISCORD_BOT_TOKEN = secrets.access_secret_version(
+    f"projects/{PROJECT_ID}/secrets/DISCORD_BOT_TOKEN/versions/1"
+).payload.data.decode("utf-8")
+GIPHY_KEY = secrets.access_secret_version(
+    f"projects/{PROJECT_ID}/secrets/GIPHY_KEY/versions/1"
+).payload.data.decode("utf-8")
+
+# Init Bot
+command_prefix='!'
+bot = commands.Bot(command_prefix=command_prefix)
+>>>>>>> 0b3a03eb5671ec8725beadf81340813148948e1d:bot.py
 giphy = giphy_client.DefaultApi()
-
-# Set server routes
-@app.route("/")
-async def hello(request):
-    #bot.loop.create_task(channel.send("Hello")) Example to trigger bot actions from flask
-    return "Basil"
-
-# Make a partial app.run to pass args/kwargs to it
-#partial_run = partial(app.run, host="127.0.0.1", port=8080, use_reloader=False)
-#t = Thread(target=partial_run)
-#t.start()
 
 # === Bot Events ===
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
-    
+
+@bot.event
+async def on_message(message):
+    # Ignore Basil's own messages
+    if message.author == bot.user:
+        return
+
+    # If message starts with a commnd, run commnads
+    if message.content.startswith(command_prefix):
+        await bot.process_commands(message)
+        return
+
+    # Stock Ticker
+    stock_tickers = re.findall(r'[$]\b[A-Z]{3,5}\b', message.content)
+    if stock_tickers:
+        print('[Event] Stock Ticker Found')
+        stocks = [ticker.replace('$', '') for ticker in stock_tickers]
+        for stock in stocks:
+            ticker = yf.Ticker(stock)
+            history = ticker.history('6mo')
+
+            # Get Info
+            current_date = pd.to_datetime(history.index.values[-1]).date()
+            close = history.iloc[-1]['Close']
+            change_7 = '$' + str(np.round(close - history.iloc[-7]['Close'], 2))
+            change_30 = '$' + str(np.round(close - history.iloc[-30]['Close'], 2))
+            change_90 = '$' + str(np.round(close - history.iloc[-90]['Close'], 2))
+
+            # Format Output
+            header = ['Delta Period', 'Change']
+            data = [
+                ['07 Days', change_7],
+                ['30 Days', change_30],
+                ['90 Days', change_90]
+            ]
+            await message.channel.send(
+                f'```Ticker: {stock}\n\n' +
+                f'{current_date} - Close: ${close:0.2f}\n\n' +
+                f'{tabulate(data, headers=header, tablefmt="fancy_grid", numalign="right")}```'
+            )
+
+
 # === Bot Commands ===
 @bot.command(
     brief='Shows a random gif',
@@ -53,7 +96,7 @@ async def random(ctx, *args):
     image_url = response.data[0].url
     await ctx.send(f'{image_url}')
 
-    
+
 @random.error
 async def random_error(ctx, error):
     cmd = '!random'
@@ -70,7 +113,7 @@ async def odds(ctx, odds, guess):
 
     odds, guess = int(odds), int(guess)
     msg = f'Odds: 1 to {odds}, Your Guess: {guess}\n'
-    
+
     if odds > 100 or odds < 1:
         msg += 'Error: Your odds have to be betwen 1 and 100!'
     elif guess > odds or guess < 1:
@@ -83,7 +126,7 @@ async def odds(ctx, odds, guess):
             msg += 'They match! Now you gotta do it.'
         else:
             msg += 'They don\'t match! You don\'t have to do it.'
-    
+
     await ctx.send(msg)
 
 
@@ -93,6 +136,7 @@ async def odds_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f'Error: {cmd} command is missing an argument - See \'!help {cmd}\' for details.')
 
+<<<<<<< HEAD:main.py
         
 if __name__ == '__main__':
     # Start event loop
@@ -104,4 +148,8 @@ if __name__ == '__main__':
     
     loop.run_forever()
     loop.close()
+=======
+>>>>>>> 0b3a03eb5671ec8725beadf81340813148948e1d:bot.py
 
+if __name__ == '__main__':
+    bot_app = bot.run(DISCORD_BOT_TOKEN)
